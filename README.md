@@ -1,13 +1,24 @@
 # URL Shortener Service
 
-A simple URL shortener service built with Go. This application allows users to shorten long URLs and use custom aliases. It provides endpoints to create shortened URLs and to redirect users to the original URLs.
+A simple URL shortener service built with Go and deployed on Vercel using serverless functions. This application allows users to shorten long URLs and use custom aliases. It uses Redis for data persistence across serverless function invocations.
+
+---
 
 ## Table of Contents
 
 - [Features](#features)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Running the Application](#running-the-application)
+- [Project Structure](#project-structure)
+- [Installation and Setup](#installation-and-setup)
+  - [1. Clone the Repository](#1-clone-the-repository)
+  - [2. Initialize Go Modules](#2-initialize-go-modules)
+  - [3. Install Dependencies](#3-install-dependencies)
+- [Setting Up Redis](#setting-up-redis)
+- [Configuring Vercel](#configuring-vercel)
+  - [1. Install Vercel CLI](#1-install-vercel-cli)
+  - [2. Log In to Vercel](#2-log-in-to-vercel)
+  - [3. Set Environment Variables](#3-set-environment-variables)
+- [Deployment](#deployment)
 - [Usage](#usage)
   - [Shorten a URL](#shorten-a-url)
     - [With Auto-Generated Alias](#with-auto-generated-alias)
@@ -15,79 +26,164 @@ A simple URL shortener service built with Go. This application allows users to s
   - [Redirect to Original URL](#redirect-to-original-url)
 - [Examples](#examples)
 - [Testing](#testing)
-- [Notes](#notes)
-- [License](#license)
+- [Project Notes](#project-notes)
+  - [Data Persistence](#data-persistence)
+  - [Serverless Function Limits](#serverless-function-limits)
+  - [Performance Considerations](#performance-considerations)
 
 ---
 
 ## Features
 
-- Shorten long URLs with auto-generated aliases.
-- Use custom aliases for shortened URLs.
-- Redirect users from the shortened URL to the original URL.
-- Input validation and error handling.
-
-## Prerequisites
-
-- **Go (Latest Version)**: Ensure Go 1.21 or higher is installed. [Download Go](https://go.dev/dl/)
-  ```bash
-  go version
-  ```
-  This should output `go version go 1.21.x` (or higher).
-
-
-## Installation
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/iamrajhans/url-shortener.git
-   cd url-shortener
-   ```
-
-2. **Initialize Go Modules**
-
-   If you didn't clone from a repository with a `go.mod` file, initialize the module:
-
-   ```bash
-   go mod init github.com/iamrajhans/url-shortener
-   ```
-
-3. **Download Dependencies**
-
-   Since we're using only the standard library, there are no external dependencies to download.
+- **Shorten Long URLs**: Convert long URLs into short, manageable aliases.
+- **Custom Aliases**: Users can specify custom aliases for their URLs.
+- **Persistent Storage**: Uses Redis to store URL mappings persistently.
+- **Serverless Deployment**: Deployed on Vercel using Go serverless functions.
+- **Input Validation**: Validates URLs and aliases for correctness.
+- **Error Handling**: Provides clear error messages and HTTP status codes.
 
 ---
 
-## Running the Application
+## Prerequisites
 
-1. **Build the Application**
+- **Go (Latest Version)**: Ensure Go 1.21 or higher is installed.
+  ```bash
+  go version
+  ```
+- **Redis Instance**: A Redis database accessible over the internet.
+  - You can use services like [Redis Cloud](https://redis.com/redis-enterprise-cloud/) or [Upstash](https://upstash.com/) for serverless Redis instances.
+- **Vercel Account**: Sign up for a free account at [vercel.com](https://vercel.com/signup).
+- **Vercel CLI**: Install Vercel CLI globally.
+  ```bash
+  npm install -g vercel
+  ```
+  Note: Requires Node.js and npm.
+- **Git**: For version control and deploying the project.
+  ```bash
+  git --version
+  ```
 
-   You can build the application into an executable binary:
+---
+
+## Project Structure
+
+```
+url-shortener-vercel/
+├── api/
+│   ├── redirect/
+│         └── redirect.go
+│   └── shorten.go
+├── go.mod
+├── go.sum
+├── vercel.json
+└── README.md
+```
+
+- **api/**: Contains the serverless function files.
+  - **shorten.go**: Handles URL shortening requests.
+  - **redirect.go**: Handles redirection to the original URL.
+- **vercel.json**: Configuration file for Vercel deployment.
+- **go.mod** and **go.sum**: Go module files for dependency management.
+
+---
+
+## Installation and Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/url-shortener-vercel.git
+cd url-shortener-vercel
+```
+
+### 2. Initialize Go Modules
+
+If you didn't clone from a repository with a `go.mod` file, initialize the module:
+
+```bash
+go mod init github.com/yourusername/url-shortener-vercel
+```
+
+### 3. Install Dependencies
+
+Download the required Go packages:
+
+```bash
+go get ./...
+```
+
+---
+
+## Setting Up Redis
+
+You'll need access to a Redis instance to store URL mappings. You can use a cloud-hosted Redis service:
+
+- **Option 1**: [Redis Cloud](https://redis.com/redis-enterprise-cloud/)
+- **Option 2**: [Upstash](https://upstash.com/) (offers a free tier with limited usage)
+
+**Note**: Obtain the Redis connection details:
+
+- **REDIS_HOST**: The address and port of your Redis instance (e.g., `redis-12345.c250.us-east-1-3.ec2.cloud.redislabs.com:12345`)
+- **REDIS_PASSWORD**: The password for your Redis instance.
+
+---
+
+## Configuring Vercel
+
+### 1. Install Vercel CLI
+
+```bash
+npm install -g vercel
+```
+
+### 2. Log In to Vercel
+
+```bash
+vercel login
+```
+
+Follow the prompts to log in to your Vercel account.
+
+### 3. Set Environment Variables
+
+Set up the environment variables required for your application:
+
+1. **Initialize the Project with Vercel**
 
    ```bash
-   go build -o url-shortener
+   vercel
    ```
 
-2. **Run the Application**
+   Follow the prompts:
 
-   ```bash
-   ./url-shortener
-   ```
+   - **Set up and deploy “url-shortener-vercel”?** `Yes`
+   - **Which scope do you want to deploy to?** Select your username or team.
+   - **Link to existing project?** `No`
+   - **What’s your project’s name?** Press Enter to accept `url-shortener-vercel` or provide a custom name.
+   - **In which directory is your code located?** `./` (the current directory)
 
-   Alternatively, you can run it directly without building:
+2. **Set Environment Variables in Vercel Dashboard**
 
-   ```bash
-   go run main.go
-   ```
+   - Go to your project on the Vercel dashboard.
+   - Navigate to **Settings** > **Environment Variables**.
+   - Add the following variables:
 
-3. **Server Output**
+     | Key             | Value                | Environment | Encrypt |
+     |-----------------|----------------------|-------------|---------|
+     | `REDIS_HOST`    | Your Redis host      | All         | Yes     |
+     | `REDIS_PASSWORD`| Your Redis password  | All         | Yes     |
 
-   The server will start on port `8080`:
+---
 
-   ```
-   Server started at :8080
-   ```
+## Deployment
+
+Deploy the application to Vercel:
+
+```bash
+vercel --prod
+```
+
+After deployment, Vercel will provide a URL like `https://url-shortener-vercel.vercel.app`.
 
 ---
 
@@ -104,7 +200,7 @@ Send a `POST` request to `/shorten` with the JSON payload containing the `url`.
 ```bash
 curl -X POST -H "Content-Type: application/json" \
 -d '{"url": "https://www.example.com"}' \
-http://localhost:8080/shorten
+https://url-shortener-vercel.vercel.app/shorten
 ```
 
 **Response:**
@@ -125,7 +221,7 @@ Provide a custom `alias` in the JSON payload.
 ```bash
 curl -X POST -H "Content-Type: application/json" \
 -d '{"url": "https://www.example.com", "alias": "example"}' \
-http://localhost:8080/shorten
+https://url-shortener-vercel.vercel.app/shorten
 ```
 
 **Response:**
@@ -142,14 +238,14 @@ http://localhost:8080/shorten
 Access the shortened URL in your browser or via `curl`:
 
 ```bash
-curl -I http://localhost:8080/example
+curl -I https://url-shortener-vercel.vercel.app/example
 ```
 
 **Response Headers:**
 
 ```
-HTTP/1.1 302 Found
-Location: https://www.example.com
+HTTP/2 302
+location: https://www.example.com
 ```
 
 ---
@@ -161,7 +257,7 @@ Location: https://www.example.com
 ```bash
 curl -X POST -H "Content-Type: application/json" \
 -d '{"url": "https://www.openai.com"}' \
-http://localhost:8080/shorten
+https://url-shortener-vercel.vercel.app/shorten
 ```
 
 **Sample Response:**
@@ -178,7 +274,7 @@ http://localhost:8080/shorten
 ```bash
 curl -X POST -H "Content-Type: application/json" \
 -d '{"url": "https://www.openai.com", "alias": "openai"}' \
-http://localhost:8080/shorten
+https://url-shortener-vercel.vercel.app/shorten
 ```
 
 **Sample Response:**
@@ -195,14 +291,14 @@ http://localhost:8080/shorten
 Open in a web browser or use `curl`:
 
 ```bash
-curl -I http://localhost:8080/openai
+curl -I https://url-shortener-vercel.vercel.app/openai
 ```
 
 **Response Headers:**
 
 ```
-HTTP/1.1 302 Found
-Location: https://www.openai.com
+HTTP/2 302
+location: https://www.openai.com
 ```
 
 ---
@@ -216,7 +312,7 @@ Location: https://www.openai.com
 ```bash
 curl -X POST -H "Content-Type: application/json" \
 -d '{"url": "invalid-url"}' \
-http://localhost:8080/shorten
+https://url-shortener-vercel.vercel.app/shorten
 ```
 
 **Response:**
@@ -236,7 +332,7 @@ If you try to use an alias that's already taken:
 ```bash
 curl -X POST -H "Content-Type: application/json" \
 -d '{"url": "https://www.example.com", "alias": "openai"}' \
-http://localhost:8080/shorten
+https://url-shortener-vercel.vercel.app/shorten
 ```
 
 **Response:**
@@ -252,7 +348,7 @@ Alias already in use
 **Request:**
 
 ```bash
-curl -I http://localhost:8080/nonexistent
+curl -I https://url-shortener-vercel.vercel.app/nonexistent
 ```
 
 **Response:**
@@ -265,16 +361,36 @@ URL not found
 
 ---
 
-## Notes
+## Project Notes
 
-- **Data Persistence**: This application uses in-memory storage. All data will be lost when the server restarts. For persistent storage, consider integrating a database like SQLite or Redis.
-- **Concurrency**: The application uses `sync.Map` for thread-safe operations.
-- **Security**: This is a basic implementation and does not include HTTPS support or advanced security features. For production use, implement HTTPS and additional security measures.
-- **Customization**: Feel free to modify the code to add features like user authentication, analytics, or a front-end interface.
+### **Data Persistence**
+
+- The application uses Redis for data storage to ensure persistence across serverless function invocations.
+- **Important**: Ensure your Redis instance is properly secured and accessible from Vercel's network.
+
+### **Serverless Function Limits**
+
+- Be aware of Vercel's serverless function limits:
+  - **Execution Time**: Functions have a maximum execution time (default 10 seconds).
+  - **Memory**: Default memory allocation is 1024 MB.
+- Adjust these settings in `vercel.json` if necessary.
+
+### **Performance Considerations**
+
+- **Cold Starts**: Serverless functions may have cold starts, leading to initial latency.
+- **Connection Reuse**: The Redis client is initialized at the package level to reuse connections where possible.
+- **Concurrency**: Redis handles concurrent connections, but monitor your usage to avoid exceeding limits.
 
 ---
 
 
-**Enjoy your new URL Shortener!**
+**Enjoy your new URL Shortener deployed on Vercel!**
 
 For any questions or issues, please open an issue on the project's GitHub repository.
+
+---
+
+
+**Feel free to contribute to the project or customize it to suit your needs!**
+
+If you encounter any issues or have suggestions for improvements, please create an issue or pull request on the project's GitHub repository.
