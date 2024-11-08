@@ -5,24 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
 	"time"
-
-	"github.com/redis/go-redis/v9"
+	"url-shortner/api/utils"
 )
 
 var ctx = context.Background()
-
-var redisClient *redis.Client
-
-func init() {
-	redisClient = redis.NewClient(&redis.Options{
-
-		Addr:     os.Getenv("REDIS_HOST"), // e.g., "localhost:6379"
-		Password: os.Getenv("REDIS_PASSWORD"),
-		DB:       0,
-	})
-}
 
 type shortenRequest struct {
 	URL   string `json:"url"`
@@ -52,6 +39,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		alias = generateAlias()
 	}
 
+	// Get redis Client
+	redisClient := utils.GetRedisClient()
 	// Check if alias already exists
 	exists, err := redisClient.Exists(ctx, alias).Result()
 	if err != nil {

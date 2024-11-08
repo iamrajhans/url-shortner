@@ -4,22 +4,12 @@ package handler
 import (
 	"context"
 	"net/http"
-	"os"
+	"url-shortner/api/utils"
 
 	"github.com/redis/go-redis/v9"
 )
 
 var ctx = context.Background()
-
-var redisClient *redis.Client
-
-func init() {
-	redisClient = redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_HOST"),
-		Password: os.Getenv("REDIS_PASSWORD"),
-		DB:       0,
-	})
-}
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	alias := r.URL.Path[1:] // Trim the leading '/'
@@ -28,6 +18,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Alias not provided", http.StatusBadRequest)
 		return
 	}
+
+	// Get redis Client
+	redisClient := utils.GetRedisClient()
 
 	url, err := redisClient.Get(ctx, alias).Result()
 	if err == redis.Nil {

@@ -72,6 +72,8 @@ url-shortener-vercel/
 ├── api/
 │   ├── redirect/
 │         └── redirect.go
+│   ├── utils/
+│         └── utils.go
 │   └── shorten.go
 ├── go.mod
 ├── go.sum
@@ -82,6 +84,7 @@ url-shortener-vercel/
 - **api/**: Contains the serverless function files.
   - **shorten.go**: Handles URL shortening requests.
   - **redirect.go**: Handles redirection to the original URL.
+  - **utils.go**: Contains util functions
 - **vercel.json**: Configuration file for Vercel deployment.
 - **go.mod** and **go.sum**: Go module files for dependency management.
 
